@@ -122,6 +122,7 @@ class DocumentProcessor:
         """
         Build PDF with the exact corrected text.
         Uses simple formatting - no special fonts or superscripts.
+        Title is bolded, paragraphs have spacing between them.
         """
         corrected_text = corrected_data.get('text', '')
         
@@ -135,24 +136,40 @@ class DocumentProcessor:
         margin_bottom = 72
         
         usable_width = width - margin_left - margin_right
-        line_height = 14
+        line_height = 16
         font_size = 11
-        
-        c.setFont("Helvetica", font_size)
+        title_font_size = 14
+        paragraph_spacing = 12  # Extra space between paragraphs
         
         y = height - margin_top
         
         # Split into paragraphs
         paragraphs = corrected_text.split('\n')
+        is_first_paragraph = True
         
         for paragraph in paragraphs:
             if not paragraph.strip():
-                y -= line_height
+                # Empty line - add paragraph spacing
+                y -= paragraph_spacing
                 if y < margin_bottom:
                     c.showPage()
-                    c.setFont("Helvetica", font_size)
                     y = height - margin_top
                 continue
+            
+            # Check if this is a title (first non-empty paragraph or short line that looks like a header)
+            is_title = is_first_paragraph or (len(paragraph) < 80 and paragraph.strip().istitle())
+            
+            if is_title and is_first_paragraph:
+                # Bold title
+                c.setFont("Helvetica-Bold", title_font_size)
+                current_font = "Helvetica-Bold"
+                current_size = title_font_size
+                is_first_paragraph = False
+            else:
+                # Regular text
+                c.setFont("Helvetica", font_size)
+                current_font = "Helvetica"
+                current_size = font_size
             
             # Word wrap the paragraph
             words = paragraph.split()
@@ -160,7 +177,7 @@ class DocumentProcessor:
             
             for word in words:
                 test_line = current_line + " " + word if current_line else word
-                text_width = c.stringWidth(test_line, "Helvetica", font_size)
+                text_width = c.stringWidth(test_line, current_font, current_size)
                 
                 if text_width <= usable_width:
                     current_line = test_line
@@ -172,7 +189,7 @@ class DocumentProcessor:
                         
                         if y < margin_bottom:
                             c.showPage()
-                            c.setFont("Helvetica", font_size)
+                            c.setFont(current_font, current_size)
                             y = height - margin_top
                     
                     current_line = word
@@ -181,11 +198,13 @@ class DocumentProcessor:
             if current_line:
                 c.drawString(margin_left, y, current_line)
                 y -= line_height
-                
-                if y < margin_bottom:
-                    c.showPage()
-                    c.setFont("Helvetica", font_size)
-                    y = height - margin_top
+            
+            # Add spacing after each paragraph
+            y -= paragraph_spacing
+            
+            if y < margin_bottom:
+                c.showPage()
+                y = height - margin_top
         
         c.save()
         buffer.seek(0)
