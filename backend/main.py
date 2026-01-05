@@ -1,13 +1,10 @@
 """
-Document Correction API
-Handles PDF, XLSX, DOCX files - extracts text, corrects it, and returns in original format.
+Practical Review API - Document correction service
 """
 
 import os
-import io
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,21 +15,19 @@ from document_processor import DocumentProcessor
 from ai_corrector import AICorrector
 
 app = FastAPI(
-    title="Document Correction API",
-    description="AI-powered document correction for spelling, grammar, and factual accuracy",
+    title="Practical Review API",
+    description="AI-powered document correction",
     version="1.0.0"
 )
 
-# CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for local development
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Initialize processors
 doc_processor = DocumentProcessor()
 ai_corrector = AICorrector()
 
@@ -41,13 +36,13 @@ SUPPORTED_FORMATS = {'.pdf', '.xlsx', '.docx', '.txt'}
 
 @app.get("/")
 async def root():
-    return {"message": "Document Correction API", "status": "running"}
+    return {"message": "Practical Review API", "status": "running"}
 
 
 @app.get("/health")
 async def health_check():
     return {
-        "status": "healthy", 
+        "status": "healthy",
         "ai_available": ai_corrector.is_available(),
         "ai_provider": ai_corrector.get_provider()
     }
@@ -55,107 +50,76 @@ async def health_check():
 
 @app.post("/upload")
 async def upload_and_correct(file: UploadFile = File(...)):
-    """
-    Upload a document, correct it, and return the corrected version.
-    Supports: PDF, XLSX, DOCX, TXT
-    """
-    # Validate file extension
+    """Upload a document, correct it, and return the corrected version."""
     file_ext = Path(file.filename).suffix.lower()
+    
     if file_ext not in SUPPORTED_FORMATS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported file format. Supported: {', '.join(SUPPORTED_FORMATS)}"
-        )
+        raise HTTPException(400, f"Unsupported format. Use: {', '.join(SUPPORTED_FORMATS)}")
     
     try:
-        # Read file content
         content = await file.read()
+        extracted = doc_processor.extract_text(content, file_ext)
         
-        # Extract text from document
-        extracted_data = doc_processor.extract_text(content, file_ext)
+        if not extracted['text'].strip():
+            raise HTTPException(400, "No text found in document")
         
-        if not extracted_data['text'].strip():
-            raise HTTPException(status_code=400, detail="No text content found in the document")
+        corrected = await ai_corrector.correct_text(extracted)
+        corrected_file = doc_processor.rebuild_document(corrected, file_ext, content)
         
-        # Correct the text using AI
-        corrected_data = await ai_corrector.correct_text(extracted_data)
-        
-        # Rebuild document in original format
-        corrected_file = doc_processor.rebuild_document(
-            corrected_data,
-            file_ext,
-            original_content=content
-        )
-        
-        # Create temp file for response
         temp_dir = tempfile.mkdtemp()
-        output_filename = f"corrected_{file.filename}"
-        output_path = os.path.join(temp_dir, output_filename)
+        output_path = os.path.join(temp_dir, f"corrected_{file.filename}")
         
         with open(output_path, 'wb') as f:
             f.write(corrected_file)
         
+        media_types = {
+            '.pdf': 'application/pdf',
+            '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            '.txt': 'text/plain'
+        }
+        
         return FileResponse(
             path=output_path,
-            filename=output_filename,
-            media_type=_get_media_type(file_ext),
-            headers={
-                "X-Original-Text": str(len(extracted_data['text'])),
-                "X-Corrected-Text": str(len(corrected_data.get('text', '')))
-            }
+            filename=f"corrected_{file.filename}",
+            media_type=media_types.get(file_ext, 'application/octet-stream')
         )
         
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+        raise HTTPException(500, f"Error: {str(e)}")
 
 
 @app.post("/preview")
 async def preview_corrections(file: UploadFile = File(...)):
-    """
-    Preview corrections without downloading - returns diff/comparison.
-    """
+    """Preview corrections without downloading."""
     file_ext = Path(file.filename).suffix.lower()
+    
     if file_ext not in SUPPORTED_FORMATS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported file format. Supported: {', '.join(SUPPORTED_FORMATS)}"
-        )
+        raise HTTPException(400, f"Unsupported format. Use: {', '.join(SUPPORTED_FORMATS)}")
     
     try:
         content = await file.read()
-        extracted_data = doc_processor.extract_text(content, file_ext)
+        extracted = doc_processor.extract_text(content, file_ext)
         
-        if not extracted_data['text'].strip():
-            raise HTTPException(status_code=400, detail="No text content found in the document")
+        if not extracted['text'].strip():
+            raise HTTPException(400, "No text found in document")
         
-        corrected_data = await ai_corrector.correct_text(extracted_data)
+        corrected = await ai_corrector.correct_text(extracted)
         
         return JSONResponse({
-            "original": extracted_data['text'],
-            "corrected": corrected_data.get('text', ''),
-            "changes": corrected_data.get('changes', []),
-            "summary": corrected_data.get('summary', '')
+            "original": extracted['text'],
+            "corrected": corrected.get('text', ''),
+            "changes": corrected.get('changes', []),
+            "summary": corrected.get('summary', '')
         })
         
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
-
-
-def _get_media_type(ext: str) -> str:
-    """Get MIME type for file extension."""
-    types = {
-        '.pdf': 'application/pdf',
-        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        '.txt': 'text/plain'
-    }
-    return types.get(ext, 'application/octet-stream')
+        raise HTTPException(500, f"Error: {str(e)}")
 
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-

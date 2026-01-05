@@ -3,196 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Refine — Document Correction</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>Practical Review — Document Correction</title>
     <style>
-        :root {
-            --bg-primary: #0a0908;
-            --bg-secondary: #121110;
-            --bg-tertiary: #1a1816;
-            --bg-card: #0f0e0d;
-            --text-primary: #f4f0ec;
-            --text-secondary: #a8a29e;
-            --text-muted: #6b6560;
-            --accent: #e07a5f;
-            --accent-hover: #f0927a;
-            --accent-soft: rgba(224, 122, 95, 0.12);
-            --success: #81b29a;
-            --success-soft: rgba(129, 178, 154, 0.15);
-            --border: rgba(255, 255, 255, 0.06);
-            --border-hover: rgba(255, 255, 255, 0.12);
-            --font-serif: 'Instrument Serif', Georgia, serif;
-            --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 20px;
-            --radius-xl: 28px;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        html {
-            font-size: 16px;
-            -webkit-font-smoothing: antialiased;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: var(--font-sans);
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #ffffff;
+            color: #111111;
             min-height: 100vh;
-            line-height: 1.6;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: 
-                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(224, 122, 95, 0.08), transparent),
-                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(129, 178, 154, 0.04), transparent);
-            pointer-events: none;
+            line-height: 1.5;
         }
 
         .app {
-            position: relative;
-            z-index: 1;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 3rem 1.5rem;
+            padding: 48px 24px;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 4rem;
-            animation: fadeInDown 0.6s ease;
-        }
-
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+            margin-bottom: 48px;
         }
 
         .logo {
-            font-family: var(--font-serif);
-            font-size: 3.5rem;
-            font-weight: 400;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.75rem;
-        }
-
-        .logo em {
-            font-style: italic;
-            color: var(--accent);
+            font-size: 28px;
+            font-weight: 600;
+            color: #111111;
+            margin-bottom: 8px;
         }
 
         .tagline {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            max-width: 400px;
-            margin: 0 auto;
+            font-size: 16px;
+            color: #666666;
         }
 
+        /* Upload Zone */
         .upload-zone {
             width: 100%;
-            max-width: 640px;
-            background: var(--bg-card);
-            border: 1px dashed var(--border);
-            border-radius: var(--radius-xl);
-            padding: 4rem 2rem;
+            max-width: 560px;
+            background: #fafafa;
+            border: 2px dashed #dddddd;
+            border-radius: 8px;
+            padding: 48px 24px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .upload-zone::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, var(--accent-soft), transparent 70%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .upload-zone:hover {
-            border-color: var(--accent);
-            border-style: solid;
-            transform: translateY(-2px);
-            box-shadow: 0 0 60px rgba(224, 122, 95, 0.1);
+            border-color: #111111;
+            background: #f5f5f5;
         }
-
-        .upload-zone:hover::before { opacity: 1; }
 
         .upload-zone.dragging {
-            border-color: var(--accent);
-            border-style: solid;
-            background: var(--accent-soft);
-            transform: scale(1.01);
+            border-color: #111111;
+            background: #f0f0f0;
         }
 
-        .upload-content { position: relative; z-index: 1; }
-
         .upload-icon {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 1.5rem;
-            opacity: 0.6;
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
         }
 
         .upload-icon svg {
             width: 100%;
             height: 100%;
-            stroke: var(--text-secondary);
+            stroke: #666666;
             stroke-width: 1.5;
             fill: none;
         }
 
         .upload-title {
-            font-family: var(--font-serif);
-            font-size: 1.75rem;
-            margin-bottom: 0.5rem;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 4px;
         }
 
         .upload-subtitle {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-bottom: 1.5rem;
+            color: #666666;
+            font-size: 14px;
+            margin-bottom: 16px;
         }
 
         .upload-formats {
             display: flex;
-            gap: 0.5rem;
+            gap: 8px;
             justify-content: center;
             flex-wrap: wrap;
         }
 
         .format-badge {
-            font-family: var(--font-mono);
-            font-size: 0.75rem;
-            padding: 0.35rem 0.75rem;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            font-size: 12px;
+            padding: 4px 10px;
+            background: #eeeeee;
+            border-radius: 4px;
+            color: #666666;
         }
 
         .hidden { display: none !important; }
@@ -200,40 +113,39 @@
         /* Processing */
         .processing-container {
             width: 100%;
-            max-width: 640px;
+            max-width: 560px;
             text-align: center;
-            animation: fadeIn 0.3s ease;
         }
 
         .processing-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-xl);
-            padding: 3rem 2rem;
+            background: #fafafa;
+            border: 1px solid #eeeeee;
+            border-radius: 8px;
+            padding: 40px 24px;
         }
 
         .file-info {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
         .file-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--accent-soft);
-            border-radius: var(--radius-md);
+            width: 40px;
+            height: 40px;
+            background: #eeeeee;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .file-icon svg {
-            width: 24px;
-            height: 24px;
-            stroke: var(--accent);
+            width: 20px;
+            height: 20px;
+            stroke: #666666;
             stroke-width: 2;
             fill: none;
         }
@@ -241,57 +153,62 @@
         .file-details { text-align: left; }
 
         .file-name {
-            font-family: var(--font-mono);
-            font-size: 0.95rem;
-            margin-bottom: 0.25rem;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
         }
 
         .file-size {
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            font-size: 12px;
+            color: #888888;
         }
 
         .spinner {
-            width: 48px;
-            height: 48px;
-            margin: 0 auto 1.5rem;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent);
+            width: 32px;
+            height: 32px;
+            margin: 0 auto 16px;
+            border: 2px solid #eeeeee;
+            border-top-color: #111111;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .processing-text {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
         }
 
         .processing-step {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
+            font-size: 14px;
+            color: #666666;
         }
 
-        .progress-container { margin-top: 1.5rem; }
+        .progress-container { margin-top: 20px; }
 
         .progress-label {
             display: flex;
             justify-content: space-between;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.75rem;
+            font-size: 12px;
+            color: #666666;
+            margin-bottom: 8px;
         }
 
         .progress-bar {
-            height: 6px;
-            background: var(--bg-tertiary);
-            border-radius: 3px;
+            height: 4px;
+            background: #eeeeee;
+            border-radius: 2px;
             overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--accent), var(--accent-hover));
-            border-radius: 3px;
+            background: #111111;
+            border-radius: 2px;
             transition: width 0.3s ease;
             width: 0%;
         }
@@ -300,31 +217,29 @@
         .results-container {
             width: 100%;
             max-width: 800px;
-            animation: fadeIn 0.4s ease;
         }
 
         .results-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 1.5rem;
-            padding: 0 0.5rem;
+            margin-bottom: 24px;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 16px;
         }
 
         .results-title {
-            font-family: var(--font-serif);
-            font-size: 1.5rem;
+            font-size: 20px;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 10px;
         }
 
         .success-icon {
-            width: 28px;
-            height: 28px;
-            background: var(--success-soft);
+            width: 24px;
+            height: 24px;
+            background: #e8f5e9;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -332,211 +247,206 @@
         }
 
         .success-icon svg {
-            width: 16px;
-            height: 16px;
-            stroke: var(--success);
+            width: 14px;
+            height: 14px;
+            stroke: #2e7d32;
             stroke-width: 2.5;
             fill: none;
         }
 
         .results-actions {
             display: flex;
-            gap: 0.75rem;
+            gap: 8px;
         }
 
         .btn {
-            font-family: var(--font-sans);
-            font-size: 0.9rem;
+            font-family: inherit;
+            font-size: 14px;
             font-weight: 500;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--radius-md);
+            padding: 10px 20px;
+            border-radius: 6px;
             border: none;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 6px;
         }
 
         .btn-primary {
-            background: var(--accent);
-            color: var(--bg-primary);
+            background: #111111;
+            color: #ffffff;
         }
 
         .btn-primary:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
+            background: #333333;
         }
 
         .btn-secondary {
-            background: transparent;
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
+            background: #ffffff;
+            color: #111111;
+            border: 1px solid #dddddd;
         }
 
         .btn-secondary:hover {
-            border-color: var(--border-hover);
-            color: var(--text-primary);
+            background: #f5f5f5;
         }
 
         .btn svg {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             stroke: currentColor;
             stroke-width: 2;
             fill: none;
         }
 
         .changes-summary {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            background: #fafafa;
+            border: 1px solid #eeeeee;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
         }
 
         .summary-text {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            line-height: 1.7;
+            font-size: 14px;
+            color: #444444;
         }
 
         .changes-list {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
+            background: #ffffff;
+            border: 1px solid #eeeeee;
+            border-radius: 8px;
             overflow: hidden;
         }
 
         .changes-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            padding: 12px 16px;
+            border-bottom: 1px solid #eeeeee;
+            font-size: 12px;
+            font-weight: 500;
+            color: #888888;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.5px;
         }
 
         .change-item {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border);
+            padding: 16px;
+            border-bottom: 1px solid #eeeeee;
         }
 
         .change-item:last-child { border-bottom: none; }
 
         .change-type {
-            font-family: var(--font-mono);
-            font-size: 0.7rem;
+            font-size: 11px;
+            font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
+            letter-spacing: 0.5px;
+            padding: 3px 8px;
+            border-radius: 3px;
             display: inline-block;
-            margin-bottom: 0.75rem;
+            margin-bottom: 8px;
         }
 
         .change-type.spelling {
-            background: rgba(147, 197, 253, 0.15);
-            color: #93c5fd;
+            background: #e3f2fd;
+            color: #1565c0;
         }
 
         .change-type.grammar {
-            background: rgba(253, 224, 71, 0.15);
-            color: #fde047;
+            background: #fff8e1;
+            color: #f57f17;
         }
 
         .change-type.factual {
-            background: rgba(248, 113, 113, 0.15);
-            color: #f87171;
+            background: #ffebee;
+            color: #c62828;
         }
 
         .change-text {
             display: flex;
-            gap: 1rem;
+            gap: 8px;
             align-items: flex-start;
-            margin-bottom: 0.5rem;
+            margin-bottom: 6px;
             flex-wrap: wrap;
         }
 
         .original {
-            color: var(--text-muted);
+            color: #999999;
             text-decoration: line-through;
-            font-family: var(--font-mono);
-            font-size: 0.9rem;
+            font-size: 14px;
         }
 
-        .arrow { color: var(--text-muted); }
+        .arrow { color: #999999; }
 
         .corrected {
-            color: var(--success);
-            font-family: var(--font-mono);
-            font-size: 0.9rem;
+            color: #2e7d32;
+            font-size: 14px;
         }
 
         .change-explanation {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+            font-size: 13px;
+            color: #666666;
             font-style: italic;
         }
 
         .preview-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-top: 1.5rem;
+            gap: 16px;
+            margin-top: 16px;
         }
 
         .preview-panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
+            background: #ffffff;
+            border: 1px solid #eeeeee;
+            border-radius: 8px;
             overflow: hidden;
         }
 
         .preview-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            padding: 12px 16px;
+            border-bottom: 1px solid #eeeeee;
+            font-size: 12px;
+            font-weight: 500;
+            color: #888888;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.5px;
         }
 
         .preview-content {
-            padding: 1.5rem;
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            line-height: 1.8;
-            color: var(--text-secondary);
-            max-height: 400px;
+            padding: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #444444;
+            max-height: 300px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-break: break-word;
         }
 
-        .preview-content.original-text { opacity: 0.6; }
-        .preview-content.corrected-text { color: var(--text-primary); }
+        .preview-content.original-text { color: #888888; }
+        .preview-content.corrected-text { color: #111111; }
 
         /* Error */
         .error-container {
             width: 100%;
-            max-width: 500px;
+            max-width: 480px;
             text-align: center;
-            animation: fadeIn 0.3s ease;
         }
 
         .error-card {
-            background: var(--bg-card);
-            border: 1px solid rgba(248, 113, 113, 0.3);
-            border-radius: var(--radius-xl);
-            padding: 3rem 2rem;
+            background: #ffffff;
+            border: 1px solid #ffcdd2;
+            border-radius: 8px;
+            padding: 40px 24px;
         }
 
         .error-icon {
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 1.5rem;
-            background: rgba(248, 113, 113, 0.1);
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            background: #ffebee;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -544,64 +454,56 @@
         }
 
         .error-icon svg {
-            width: 28px;
-            height: 28px;
-            stroke: #f87171;
+            width: 24px;
+            height: 24px;
+            stroke: #c62828;
             stroke-width: 2;
             fill: none;
         }
 
         .error-title {
-            font-family: var(--font-serif);
-            font-size: 1.5rem;
-            margin-bottom: 0.75rem;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
         }
 
         .error-message {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            line-height: 1.7;
+            color: #666666;
+            margin-bottom: 24px;
+            font-size: 14px;
         }
 
-        @media (max-width: 768px) {
-            .app { padding: 2rem 1rem; }
-            .logo { font-size: 2.5rem; }
-            .upload-zone { padding: 3rem 1.5rem; }
+        @media (max-width: 640px) {
+            .app { padding: 32px 16px; }
             .preview-container { grid-template-columns: 1fr; }
             .results-header { flex-direction: column; text-align: center; }
         }
-
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-tertiary); }
-        ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 4px; }
     </style>
 </head>
 <body>
     <div class="app">
         <header class="header">
-            <h1 class="logo">R<em>e</em>fine</h1>
-            <p class="tagline">AI-powered document correction for spelling, grammar, and factual accuracy</p>
+            <h1 class="logo">Practical Review</h1>
+            <p class="tagline">AI-powered document correction for spelling, grammar, and accuracy</p>
         </header>
 
         <!-- Upload State -->
         <div id="uploadZone" class="upload-zone">
             <input type="file" id="fileInput" accept=".pdf,.xlsx,.docx,.txt" style="display: none;">
-            <div class="upload-content">
-                <div class="upload-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                </div>
-                <h2 class="upload-title">Drop your document</h2>
-                <p class="upload-subtitle">or click to browse files</p>
-                <div class="upload-formats">
-                    <span class="format-badge">PDF</span>
-                    <span class="format-badge">XLSX</span>
-                    <span class="format-badge">DOCX</span>
-                    <span class="format-badge">TXT</span>
-                </div>
+            <div class="upload-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </div>
+            <h2 class="upload-title">Drop your document here</h2>
+            <p class="upload-subtitle">or click to browse</p>
+            <div class="upload-formats">
+                <span class="format-badge">PDF</span>
+                <span class="format-badge">XLSX</span>
+                <span class="format-badge">DOCX</span>
+                <span class="format-badge">TXT</span>
             </div>
         </div>
 
@@ -621,7 +523,7 @@
                     </div>
                 </div>
                 <div class="spinner"></div>
-                <p class="processing-text">Processing your document</p>
+                <p class="processing-text">Processing document</p>
                 <p id="processingStep" class="processing-step">Starting...</p>
                 <div class="progress-container">
                     <div class="progress-label">
@@ -642,7 +544,7 @@
                     <span class="success-icon">
                         <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </span>
-                    Corrections Applied
+                    Corrections Complete
                 </h2>
                 <div class="results-actions">
                     <button id="newFileBtn" class="btn btn-secondary">
@@ -698,7 +600,6 @@
     <script>
         const API_URL = 'http://localhost:8000';
         
-        // DOM Elements
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
         const processingContainer = document.getElementById('processingContainer');
@@ -708,7 +609,6 @@
         let currentFile = null;
         let correctedBlob = null;
 
-        // Utility functions
         function formatFileSize(bytes) {
             if (bytes < 1024) return bytes + ' B';
             if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
@@ -735,7 +635,6 @@
             document.getElementById('processingStep').textContent = step;
         }
 
-        // File processing
         async function processFile(file) {
             currentFile = file;
             showState('processing');
@@ -746,12 +645,11 @@
             const formData = new FormData();
             formData.append('file', file);
 
-            // Animate progress
             const steps = [
                 { progress: 20, step: 'Extracting text...' },
                 { progress: 45, step: 'Analyzing content...' },
                 { progress: 70, step: 'Applying corrections...' },
-                { progress: 90, step: 'Rebuilding document...' },
+                { progress: 90, step: 'Preparing document...' },
             ];
             
             let stepIndex = 0;
@@ -760,10 +658,9 @@
                     setProgress(steps[stepIndex].progress, steps[stepIndex].step);
                     stepIndex++;
                 }
-            }, 800);
+            }, 700);
 
             try {
-                // Get preview
                 const previewRes = await fetch(`${API_URL}/preview`, {
                     method: 'POST',
                     body: formData,
@@ -776,7 +673,6 @@
 
                 const previewData = await previewRes.json();
 
-                // Get corrected file
                 const fileFormData = new FormData();
                 fileFormData.append('file', file);
                 
@@ -793,11 +689,9 @@
                 correctedBlob = await fileRes.blob();
 
                 clearInterval(progressInterval);
-                setProgress(100, 'Complete!');
+                setProgress(100, 'Complete');
                 
-                setTimeout(() => {
-                    showResults(previewData);
-                }, 500);
+                setTimeout(() => showResults(previewData), 400);
 
             } catch (err) {
                 clearInterval(progressInterval);
@@ -808,18 +702,15 @@
         function showResults(data) {
             showState('results');
             
-            // Summary
             if (data.summary) {
                 document.getElementById('summaryText').textContent = data.summary;
-                document.getElementById('summarySection').classList.remove('hidden');
             }
 
-            // Changes list
             const changesList = document.getElementById('changesList');
             changesList.innerHTML = '';
             
             if (data.changes && data.changes.length > 0) {
-                changesList.innerHTML = `<div class="changes-header">${data.changes.length} Correction${data.changes.length !== 1 ? 's' : ''} Made</div>`;
+                changesList.innerHTML = `<div class="changes-header">${data.changes.length} Correction${data.changes.length !== 1 ? 's' : ''}</div>`;
                 
                 data.changes.slice(0, 10).forEach(change => {
                     const item = document.createElement('div');
@@ -840,14 +731,13 @@
                     const more = document.createElement('div');
                     more.className = 'change-item';
                     more.style.textAlign = 'center';
-                    more.style.color = 'var(--text-muted)';
+                    more.style.color = '#888888';
                     more.textContent = `+ ${data.changes.length - 10} more corrections`;
                     changesList.appendChild(more);
                 }
             }
 
-            // Preview
-            const maxLen = 2000;
+            const maxLen = 1500;
             document.getElementById('originalPreview').textContent = 
                 data.original?.slice(0, maxLen) + (data.original?.length > maxLen ? '...' : '');
             document.getElementById('correctedPreview').textContent = 
@@ -885,13 +775,10 @@
             }
         }
 
-        // Event listeners
         uploadZone.addEventListener('click', () => fileInput.click());
         
         fileInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                processFile(e.target.files[0]);
-            }
+            if (e.target.files[0]) processFile(e.target.files[0]);
         });
 
         uploadZone.addEventListener('dragover', (e) => {
@@ -907,9 +794,7 @@
         uploadZone.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadZone.classList.remove('dragging');
-            if (e.dataTransfer.files[0]) {
-                processFile(e.dataTransfer.files[0]);
-            }
+            if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
         });
 
         document.getElementById('newFileBtn').addEventListener('click', reset);

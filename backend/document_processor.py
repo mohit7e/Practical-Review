@@ -4,34 +4,24 @@ Supports: PDF, XLSX, DOCX, TXT
 """
 
 import io
-from typing import Dict, Any, List
-from dataclasses import dataclass
+import copy
+from typing import Dict, Any
 
-# PDF handling
 import pdfplumber
-from reportlab.lib.pagesizes import letter
+from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import letter
 
-# XLSX handling
-from openpyxl import load_workbook, Workbook
-from openpyxl.utils import get_column_letter
+from openpyxl import load_workbook
 
-# DOCX handling
 from docx import Document
-from docx.shared import Pt
 
 
 class DocumentProcessor:
     """Handles document text extraction and rebuilding."""
     
     def extract_text(self, content: bytes, file_ext: str) -> Dict[str, Any]:
-        """
-        Extract text from document based on file type.
-        Returns structured data with text and metadata.
-        """
+        """Extract text from document based on file type."""
         extractors = {
             '.pdf': self._extract_pdf,
             '.xlsx': self._extract_xlsx,
@@ -47,9 +37,7 @@ class DocumentProcessor:
     
     def rebuild_document(self, corrected_data: Dict[str, Any], file_ext: str, 
                          original_content: bytes = None) -> bytes:
-        """
-        Rebuild document with corrected text in original format.
-        """
+        """Rebuild document with corrected text in original format."""
         builders = {
             '.pdf': self._build_pdf,
             '.xlsx': self._build_xlsx,
@@ -100,18 +88,15 @@ class DocumentProcessor:
             sheet_text = []
             
             for row in ws.iter_rows():
-                row_data = []
                 for cell in row:
                     if cell.value is not None:
                         cell_value = str(cell.value)
-                        row_data.append({
+                        cells.append({
                             'row': cell.row,
                             'col': cell.column,
                             'value': cell_value
                         })
                         sheet_text.append(cell_value)
-                if row_data:
-                    cells.extend(row_data)
             
             sheets.append({
                 'name': sheet_name,
@@ -144,22 +129,19 @@ class DocumentProcessor:
                 })
                 full_text.append(para.text)
         
-        # Also extract text from tables
+        # Extract from tables
         tables = []
         for t_idx, table in enumerate(doc.tables):
             table_data = []
             for r_idx, row in enumerate(table.rows):
-                row_data = []
                 for c_idx, cell in enumerate(row.cells):
                     if cell.text.strip():
-                        row_data.append({
+                        table_data.append({
                             'row': r_idx,
                             'col': c_idx,
                             'text': cell.text
                         })
                         full_text.append(cell.text)
-                if row_data:
-                    table_data.append(row_data)
             if table_data:
                 tables.append({'index': t_idx, 'rows': table_data})
         
@@ -186,60 +168,73 @@ class DocumentProcessor:
     # ===================== BUILDERS =====================
     
     def _build_pdf(self, corrected_data: Dict[str, Any], original: bytes) -> bytes:
-        """Build a new PDF with corrected text."""
+        """
+        Build PDF - returns corrected text as a simple PDF.
+        Preserves page structure where possible.
+        """
+        corrected_text = corrected_data.get('text', '')
+        original_data = corrected_data.get('original_structure', {})
+        original_pages = original_data.get('pages', [])
+        
+        # Create correction mapping
+        original_text = corrected_data.get('original_text', '')
+        corrections = self._create_text_mapping(original_text, corrected_text)
+        
         buffer = io.BytesIO()
         
-        doc = SimpleDocTemplate(buffer, pagesize=letter,
-                                rightMargin=72, leftMargin=72,
-                                topMargin=72, bottomMargin=72)
+        # Create a simple PDF with the corrected text
+        c = canvas.Canvas(buffer, pagesize=letter)
+        width, height = letter
         
-        styles = getSampleStyleSheet()
-        story = []
-        
-        # Create custom style
-        custom_style = ParagraphStyle(
-            'CustomBody',
-            parent=styles['Normal'],
-            fontSize=11,
-            leading=14,
-            spaceAfter=12
-        )
-        
-        # Split corrected text into paragraphs
-        text = corrected_data.get('text', '')
-        paragraphs = text.split('\n\n')
-        
-        for para in paragraphs:
-            if para.strip():
-                # Escape special characters for ReportLab
-                safe_para = para.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-                story.append(Paragraph(safe_para, custom_style))
-                story.append(Spacer(1, 6))
-        
-        if story:
-            doc.build(story)
+        # Split text into pages based on original page breaks
+        if original_pages:
+            page_texts = corrected_text.split('\n\n')
+            y_position = height - 72
+            line_height = 14
+            margin = 72
+            max_width = width - (2 * margin)
+            
+            for page_text in page_texts:
+                lines = page_text.split('\n')
+                for line in lines:
+                    if y_position < 72:
+                        c.showPage()
+                        y_position = height - 72
+                    
+                    # Wrap long lines
+                    if line:
+                        c.setFont("Helvetica", 11)
+                        c.drawString(margin, y_position, line[:100])
+                    y_position -= line_height
+                
+                y_position -= line_height  # Extra space between pages
         else:
-            # Empty document fallback
-            doc.build([Paragraph("No content", styles['Normal'])])
+            # Single page fallback
+            y_position = height - 72
+            for line in corrected_text.split('\n'):
+                if y_position < 72:
+                    c.showPage()
+                    y_position = height - 72
+                if line.strip():
+                    c.setFont("Helvetica", 11)
+                    c.drawString(72, y_position, line[:100])
+                y_position -= 14
         
+        c.save()
         buffer.seek(0)
         return buffer.getvalue()
     
     def _build_xlsx(self, corrected_data: Dict[str, Any], original: bytes) -> bytes:
         """Build Excel file with corrected text in cells."""
-        # Load original to preserve structure
         original_wb = load_workbook(io.BytesIO(original))
         
-        # Parse corrected text back to cells
         corrected_text = corrected_data.get('text', '')
         original_data = corrected_data.get('original_structure', {})
         sheets = original_data.get('sheets', [])
+        original_text = corrected_data.get('original_text', '')
         
-        # Create mapping of original text to corrected text
-        corrections = self._create_correction_map(
-            original_data.get('original_text', ''),
-            corrected_text
-        )
+        # Create word-level mapping
+        corrections = self._create_word_mapping(original_text, corrected_text)
         
         # Apply corrections to cells
         for sheet_info in sheets:
@@ -250,8 +245,8 @@ class DocumentProcessor:
                     row, col = cell_info['row'], cell_info['col']
                     original_value = cell_info['value']
                     
-                    # Find corrected value
-                    corrected_value = corrections.get(original_value, original_value)
+                    # Apply word-level corrections
+                    corrected_value = self._apply_corrections(original_value, corrections)
                     ws.cell(row=row, column=col, value=corrected_value)
         
         buffer = io.BytesIO()
@@ -261,36 +256,38 @@ class DocumentProcessor:
         return buffer.getvalue()
     
     def _build_docx(self, corrected_data: Dict[str, Any], original: bytes) -> bytes:
-        """Build Word document with corrected text."""
-        # Load original to preserve formatting
+        """Build Word document with corrected text, preserving formatting."""
         doc = Document(io.BytesIO(original))
         
         corrected_text = corrected_data.get('text', '')
         original_data = corrected_data.get('original_structure', {})
         paragraphs = original_data.get('paragraphs', [])
+        original_text = corrected_data.get('original_text', '')
         
-        # Create correction map
-        corrections = self._create_correction_map(
-            original_data.get('original_text', ''),
-            corrected_text
-        )
+        # Create paragraph-level mapping
+        orig_paras = [p.strip() for p in original_text.split('\n') if p.strip()]
+        corr_paras = [p.strip() for p in corrected_text.split('\n') if p.strip()]
+        
+        para_map = {}
+        for i, op in enumerate(orig_paras):
+            if i < len(corr_paras):
+                para_map[op] = corr_paras[i]
         
         # Apply corrections to paragraphs
         for para_info in paragraphs:
             idx = para_info.get('index', 0)
             if idx < len(doc.paragraphs):
-                original_text = para_info.get('text', '')
-                corrected = corrections.get(original_text, original_text)
+                original_para_text = para_info.get('text', '')
+                corrected_para = para_map.get(original_para_text, original_para_text)
                 
-                # Preserve runs/formatting by updating text
                 para = doc.paragraphs[idx]
                 if para.runs:
-                    # Try to preserve formatting by updating first run
-                    para.runs[0].text = corrected
+                    # Preserve formatting by updating first run
+                    para.runs[0].text = corrected_para
                     for run in para.runs[1:]:
                         run.text = ''
                 else:
-                    para.text = corrected
+                    para.text = corrected_para
         
         buffer = io.BytesIO()
         doc.save(buffer)
@@ -302,23 +299,35 @@ class DocumentProcessor:
         text = corrected_data.get('text', '')
         return text.encode('utf-8')
     
-    def _create_correction_map(self, original: str, corrected: str) -> Dict[str, str]:
-        """
-        Create a mapping from original text segments to corrected versions.
-        Uses simple line/paragraph matching.
-        """
-        corrections = {}
+    def _create_text_mapping(self, original: str, corrected: str) -> Dict[str, str]:
+        """Create a mapping from original text to corrected text."""
+        mapping = {}
         
-        # Split by common delimiters
-        orig_parts = [p.strip() for p in original.split('\n') if p.strip()]
-        corr_parts = [p.strip() for p in corrected.split('\n') if p.strip()]
+        orig_lines = original.split('\n')
+        corr_lines = corrected.split('\n')
         
-        # Match by position
-        for i, orig in enumerate(orig_parts):
-            if i < len(corr_parts):
-                corrections[orig] = corr_parts[i]
-            else:
-                corrections[orig] = orig  # Fallback to original
+        for i, orig_line in enumerate(orig_lines):
+            if i < len(corr_lines) and orig_line.strip():
+                mapping[orig_line.strip()] = corr_lines[i].strip()
         
-        return corrections
-
+        return mapping
+    
+    def _create_word_mapping(self, original: str, corrected: str) -> Dict[str, str]:
+        """Create word-level mapping for corrections."""
+        mapping = {}
+        
+        orig_words = original.split()
+        corr_words = corrected.split()
+        
+        for i, orig_word in enumerate(orig_words):
+            if i < len(corr_words) and orig_word != corr_words[i]:
+                mapping[orig_word] = corr_words[i]
+        
+        return mapping
+    
+    def _apply_corrections(self, text: str, corrections: Dict[str, str]) -> str:
+        """Apply word-level corrections to text."""
+        result = text
+        for orig, corr in corrections.items():
+            result = result.replace(orig, corr)
+        return result
