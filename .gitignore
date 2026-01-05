@@ -1,0 +1,23 @@
+# Virtual environment
+venv/
+backend/venv/
+__pycache__/
+*.pyc
+
+# Environment variables (contains secrets)
+.env
+backend/.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+
