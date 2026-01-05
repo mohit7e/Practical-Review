@@ -46,13 +46,18 @@ class AICorrector:
         return self._fallback_correct(text, extracted_data)
     
     def _get_prompt(self, text: str) -> str:
-        return f"""You are an expert editor and fact-checker. Correct the following document for:
+        return f"""You are an expert medical editor and fact-checker. Correct the following document for:
 
 1. Spelling errors - fix all typos and misspellings
-2. Grammar errors - fix grammar, punctuation, and sentence structure  
-3. Factual errors - correct any incorrect facts, statistics, dates, or claims
+2. Grammar errors - fix grammar, punctuation, and sentence structure
+3. Factual/Medical errors - correct any incorrect medical facts, statistics, drug names, dosages, or clinical claims
 
-Return the COMPLETE corrected text. Do not shorten or truncate.
+IMPORTANT RULES:
+- Return the COMPLETE corrected text. Do not shorten or truncate.
+- Do NOT use superscripts, subscripts, or special Unicode characters.
+- Write D2 not D², write H2O not H₂O, write 10^6 as 10^6 or "10 to the 6th".
+- Keep formatting simple - plain text only.
+- Preserve paragraph structure and line breaks.
 
 Respond with JSON only:
 {{

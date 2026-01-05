@@ -44,7 +44,6 @@
             color: #666666;
         }
 
-        /* Upload Zone */
         .upload-zone {
             width: 100%;
             max-width: 560px;
@@ -97,7 +96,6 @@
             display: flex;
             gap: 8px;
             justify-content: center;
-            flex-wrap: wrap;
         }
 
         .format-badge {
@@ -110,7 +108,6 @@
 
         .hidden { display: none !important; }
 
-        /* Processing */
         .processing-container {
             width: 100%;
             max-width: 560px;
@@ -151,17 +148,8 @@
         }
 
         .file-details { text-align: left; }
-
-        .file-name {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 2px;
-        }
-
-        .file-size {
-            font-size: 12px;
-            color: #888888;
-        }
+        .file-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+        .file-size { font-size: 12px; color: #888888; }
 
         .spinner {
             width: 32px;
@@ -173,23 +161,12 @@
             animation: spin 0.8s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .processing-text {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .processing-step {
-            font-size: 14px;
-            color: #666666;
-        }
+        .processing-text { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+        .processing-step { font-size: 14px; color: #666666; }
 
         .progress-container { margin-top: 20px; }
-
         .progress-label {
             display: flex;
             justify-content: space-between;
@@ -197,14 +174,12 @@
             color: #666666;
             margin-bottom: 8px;
         }
-
         .progress-bar {
             height: 4px;
             background: #eeeeee;
             border-radius: 2px;
             overflow: hidden;
         }
-
         .progress-fill {
             height: 100%;
             background: #111111;
@@ -213,7 +188,6 @@
             width: 0%;
         }
 
-        /* Results */
         .results-container {
             width: 100%;
             max-width: 800px;
@@ -313,21 +287,90 @@
             color: #444444;
         }
 
-        .changes-list {
+        /* Expandable corrections section */
+        .corrections-section {
             background: #ffffff;
             border: 1px solid #eeeeee;
             border-radius: 8px;
+            margin-bottom: 16px;
             overflow: hidden;
         }
 
-        .changes-header {
-            padding: 12px 16px;
+        .corrections-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            cursor: pointer;
+            background: #fafafa;
             border-bottom: 1px solid #eeeeee;
-            font-size: 12px;
+            transition: background 0.15s;
+        }
+
+        .corrections-header:hover {
+            background: #f5f5f5;
+        }
+
+        .corrections-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .corrections-count {
+            font-size: 14px;
             font-weight: 500;
-            color: #888888;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: #111111;
+        }
+
+        .corrections-badge {
+            font-size: 12px;
+            padding: 2px 8px;
+            background: #111111;
+            color: #ffffff;
+            border-radius: 10px;
+        }
+
+        .expand-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #666666;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.15s;
+        }
+
+        .expand-btn:hover {
+            background: #eeeeee;
+            color: #111111;
+        }
+
+        .expand-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            transition: transform 0.2s;
+        }
+
+        .expand-btn.expanded svg {
+            transform: rotate(45deg);
+        }
+
+        .corrections-list {
+            display: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .corrections-list.show {
+            display: block;
         }
 
         .change-item {
@@ -428,7 +471,6 @@
         .preview-content.original-text { color: #888888; }
         .preview-content.corrected-text { color: #111111; }
 
-        /* Error */
         .error-container {
             width: 100%;
             max-width: 480px;
@@ -461,17 +503,8 @@
             fill: none;
         }
 
-        .error-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .error-message {
-            color: #666666;
-            margin-bottom: 24px;
-            font-size: 14px;
-        }
+        .error-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .error-message { color: #666666; margin-bottom: 24px; font-size: 14px; }
 
         @media (max-width: 640px) {
             .app { padding: 32px 16px; }
@@ -487,7 +520,6 @@
             <p class="tagline">AI-powered document correction for spelling, grammar, and accuracy</p>
         </header>
 
-        <!-- Upload State -->
         <div id="uploadZone" class="upload-zone">
             <input type="file" id="fileInput" accept=".pdf,.xlsx,.docx,.txt" style="display: none;">
             <div class="upload-icon">
@@ -507,7 +539,6 @@
             </div>
         </div>
 
-        <!-- Processing State -->
         <div id="processingContainer" class="processing-container hidden">
             <div class="processing-card">
                 <div class="file-info">
@@ -537,7 +568,6 @@
             </div>
         </div>
 
-        <!-- Results State -->
         <div id="resultsContainer" class="results-container hidden">
             <div class="results-header">
                 <h2 class="results-title">
@@ -564,10 +594,29 @@
                     </button>
                 </div>
             </div>
+
             <div id="summarySection" class="changes-summary">
                 <p id="summaryText" class="summary-text"></p>
             </div>
-            <div id="changesList" class="changes-list"></div>
+
+            <!-- Expandable Corrections Section -->
+            <div id="correctionsSection" class="corrections-section">
+                <div class="corrections-header" onclick="toggleCorrections()">
+                    <div class="corrections-header-left">
+                        <span class="corrections-count">Corrections Made</span>
+                        <span id="correctionsBadge" class="corrections-badge">0</span>
+                    </div>
+                    <button id="expandBtn" class="expand-btn">
+                        <svg viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        See all corrections
+                    </button>
+                </div>
+                <div id="correctionsList" class="corrections-list"></div>
+            </div>
+
             <div class="preview-container">
                 <div class="preview-panel">
                     <div class="preview-header">Original</div>
@@ -580,7 +629,6 @@
             </div>
         </div>
 
-        <!-- Error State -->
         <div id="errorContainer" class="error-container hidden">
             <div class="error-card">
                 <div class="error-icon">
@@ -608,6 +656,7 @@
         
         let currentFile = null;
         let correctedBlob = null;
+        let correctionsExpanded = false;
 
         function formatFileSize(bytes) {
             if (bytes < 1024) return bytes + ' B';
@@ -635,6 +684,34 @@
             document.getElementById('processingStep').textContent = step;
         }
 
+        function toggleCorrections() {
+            correctionsExpanded = !correctionsExpanded;
+            const list = document.getElementById('correctionsList');
+            const btn = document.getElementById('expandBtn');
+            
+            if (correctionsExpanded) {
+                list.classList.add('show');
+                btn.classList.add('expanded');
+                btn.innerHTML = `
+                    <svg viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Hide corrections
+                `;
+            } else {
+                list.classList.remove('show');
+                btn.classList.remove('expanded');
+                btn.innerHTML = `
+                    <svg viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    See all corrections
+                `;
+            }
+        }
+
         async function processFile(file) {
             currentFile = file;
             showState('processing');
@@ -647,8 +724,8 @@
 
             const steps = [
                 { progress: 20, step: 'Extracting text...' },
-                { progress: 45, step: 'Analyzing content...' },
-                { progress: 70, step: 'Applying corrections...' },
+                { progress: 45, step: 'Checking spelling & grammar...' },
+                { progress: 70, step: 'Verifying medical accuracy...' },
                 { progress: 90, step: 'Preparing document...' },
             ];
             
@@ -701,18 +778,21 @@
 
         function showResults(data) {
             showState('results');
+            correctionsExpanded = false;
             
             if (data.summary) {
                 document.getElementById('summaryText').textContent = data.summary;
             }
 
-            const changesList = document.getElementById('changesList');
-            changesList.innerHTML = '';
+            const correctionsList = document.getElementById('correctionsList');
+            const correctionsBadge = document.getElementById('correctionsBadge');
+            correctionsList.innerHTML = '';
             
-            if (data.changes && data.changes.length > 0) {
-                changesList.innerHTML = `<div class="changes-header">${data.changes.length} Correction${data.changes.length !== 1 ? 's' : ''}</div>`;
-                
-                data.changes.slice(0, 10).forEach(change => {
+            const changes = data.changes || [];
+            correctionsBadge.textContent = changes.length;
+            
+            if (changes.length > 0) {
+                changes.forEach(change => {
                     const item = document.createElement('div');
                     item.className = 'change-item';
                     item.innerHTML = `
@@ -724,24 +804,14 @@
                         </div>
                         ${change.explanation ? `<p class="change-explanation">${escapeHtml(change.explanation)}</p>` : ''}
                     `;
-                    changesList.appendChild(item);
+                    correctionsList.appendChild(item);
                 });
-
-                if (data.changes.length > 10) {
-                    const more = document.createElement('div');
-                    more.className = 'change-item';
-                    more.style.textAlign = 'center';
-                    more.style.color = '#888888';
-                    more.textContent = `+ ${data.changes.length - 10} more corrections`;
-                    changesList.appendChild(more);
-                }
+            } else {
+                correctionsList.innerHTML = '<div class="change-item" style="text-align: center; color: #888;">No corrections needed</div>';
             }
 
-            const maxLen = 1500;
-            document.getElementById('originalPreview').textContent = 
-                data.original?.slice(0, maxLen) + (data.original?.length > maxLen ? '...' : '');
-            document.getElementById('correctedPreview').textContent = 
-                data.corrected?.slice(0, maxLen) + (data.corrected?.length > maxLen ? '...' : '');
+            document.getElementById('originalPreview').textContent = data.original || '';
+            document.getElementById('correctedPreview').textContent = data.corrected || '';
         }
 
         function escapeHtml(text) {
@@ -758,6 +828,7 @@
         function reset() {
             currentFile = null;
             correctedBlob = null;
+            correctionsExpanded = false;
             setProgress(0, 'Starting...');
             showState('upload');
         }
