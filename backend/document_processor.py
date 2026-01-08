@@ -95,15 +95,52 @@ class DocumentProcessor:
         return {'type': 'xlsx', 'text': ' '.join(full_text), 'sheets': sheets}
     
     def _extract_docx(self, content: bytes) -> Dict[str, Any]:
-        """Extract text from Word document."""
+        """Extract text from Word document - handles paragraphs, tables, headers, footers."""
         doc = Document(io.BytesIO(content))
         paragraphs = []
         full_text = []
         
+        # Extract from main body paragraphs
         for i, para in enumerate(doc.paragraphs):
-            if para.text.strip():
-                paragraphs.append({'index': i, 'text': para.text})
+            text = para.text.strip()
+            if text:
+                paragraphs.append({'index': i, 'text': para.text, 'source': 'body'})
                 full_text.append(para.text)
+        
+        # Extract from tables
+        for table_idx, table in enumerate(doc.tables):
+            for row_idx, row in enumerate(table.rows):
+                row_texts = []
+                for cell in row.cells:
+                    cell_text = cell.text.strip()
+                    if cell_text:
+                        row_texts.append(cell_text)
+                if row_texts:
+                    row_text = ' | '.join(row_texts)
+                    paragraphs.append({
+                        'index': len(paragraphs),
+                        'text': row_text,
+                        'source': 'table',
+                        'table_idx': table_idx,
+                        'row_idx': row_idx
+                    })
+                    full_text.append(row_text)
+        
+        # Extract from headers
+        for section in doc.sections:
+            header = section.header
+            if header:
+                for para in header.paragraphs:
+                    if para.text.strip():
+                        full_text.insert(0, para.text)  # Headers go at beginning
+                        paragraphs.insert(0, {'index': 0, 'text': para.text, 'source': 'header'})
+            
+            footer = section.footer
+            if footer:
+                for para in footer.paragraphs:
+                    if para.text.strip():
+                        full_text.append(para.text)
+                        paragraphs.append({'index': len(paragraphs), 'text': para.text, 'source': 'footer'})
         
         return {
             'type': 'docx',
