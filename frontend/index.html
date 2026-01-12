@@ -406,6 +406,70 @@
             color: #c62828;
         }
 
+        .change-type.verified {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        /* Download dropdown */
+        .download-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .download-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #dddddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 140px;
+            z-index: 100;
+            display: none;
+        }
+
+        .download-dropdown.show {
+            display: block;
+        }
+
+        .download-option {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            text-align: left;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 14px;
+            color: #333333;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .download-option:hover {
+            background: #f5f5f5;
+        }
+
+        .download-option:first-child {
+            border-radius: 6px 6px 0 0;
+        }
+
+        .download-option:last-child {
+            border-radius: 0 0 6px 6px;
+        }
+
+        .download-option .format-label {
+            font-weight: 500;
+        }
+
+        .download-option .format-desc {
+            font-size: 12px;
+            color: #888888;
+        }
+
         .change-text {
             display: flex;
             gap: 8px;
@@ -584,14 +648,37 @@
                         </svg>
                         New File
                     </button>
-                    <button id="downloadBtn" class="btn btn-primary">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        Download
-                    </button>
+                    <div class="download-wrapper">
+                        <button id="downloadBtn" class="btn btn-primary">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download
+                            <svg viewBox="0 0 24 24" style="width:12px;height:12px;margin-left:2px;">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div id="downloadDropdown" class="download-dropdown">
+                            <button class="download-option" data-format="pdf">
+                                <span class="format-label">PDF</span>
+                                <span class="format-desc">Portable Document</span>
+                            </button>
+                            <button class="download-option" data-format="docx">
+                                <span class="format-label">DOCX</span>
+                                <span class="format-desc">Word Document</span>
+                            </button>
+                            <button class="download-option" data-format="txt">
+                                <span class="format-label">TXT</span>
+                                <span class="format-desc">Plain Text</span>
+                            </button>
+                            <button class="download-option" data-format="xlsx">
+                                <span class="format-label">XLSX</span>
+                                <span class="format-desc">Excel Spreadsheet</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -656,7 +743,9 @@
         
         let currentFile = null;
         let correctedBlob = null;
+        let correctedText = null;
         let correctionsExpanded = false;
+        let downloadDropdownOpen = false;
 
         function formatFileSize(bytes) {
             if (bytes < 1024) return bytes + ' B';
@@ -749,6 +838,7 @@
                 }
 
                 const previewData = await previewRes.json();
+                correctedText = previewData.corrected;
 
                 const fileFormData = new FormData();
                 fileFormData.append('file', file);
@@ -828,13 +918,35 @@
         function reset() {
             currentFile = null;
             correctedBlob = null;
+            correctedText = null;
             correctionsExpanded = false;
+            downloadDropdownOpen = false;
+            closeDownloadDropdown();
             setProgress(0, 'Starting...');
             showState('upload');
         }
 
-        function downloadFile() {
-            if (correctedBlob && currentFile) {
+        function toggleDownloadDropdown() {
+            const dropdown = document.getElementById('downloadDropdown');
+            downloadDropdownOpen = !downloadDropdownOpen;
+            dropdown.classList.toggle('show', downloadDropdownOpen);
+        }
+
+        function closeDownloadDropdown() {
+            const dropdown = document.getElementById('downloadDropdown');
+            downloadDropdownOpen = false;
+            dropdown.classList.remove('show');
+        }
+
+        async function downloadFile(format) {
+            closeDownloadDropdown();
+            
+            if (!correctedText && !correctedBlob) return;
+            
+            const originalExt = currentFile ? currentFile.name.split('.').pop().toLowerCase() : 'txt';
+            
+            // If same format as original, use the corrected blob
+            if (format === originalExt && correctedBlob) {
                 const url = URL.createObjectURL(correctedBlob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -843,6 +955,37 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+                return;
+            }
+            
+            // Convert to different format via API
+            try {
+                const formData = new FormData();
+                formData.append('text', correctedText || '');
+                formData.append('format', format);
+                formData.append('original_name', currentFile ? currentFile.name : 'document');
+                
+                const res = await fetch(`${API_URL}/convert`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!res.ok) {
+                    throw new Error('Conversion failed');
+                }
+                
+                const blob = await res.blob();
+                const baseName = currentFile ? currentFile.name.replace(/\.[^/.]+$/, '') : 'document';
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `corrected_${baseName}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert('Failed to convert: ' + err.message);
             }
         }
 
@@ -869,8 +1012,22 @@
         });
 
         document.getElementById('newFileBtn').addEventListener('click', reset);
-        document.getElementById('downloadBtn').addEventListener('click', downloadFile);
+        document.getElementById('downloadBtn').addEventListener('click', toggleDownloadDropdown);
         document.getElementById('tryAgainBtn').addEventListener('click', reset);
+
+        // Download format options
+        document.querySelectorAll('.download-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                downloadFile(btn.dataset.format);
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.download-wrapper')) {
+                closeDownloadDropdown();
+            }
+        });
     </script>
 </body>
 </html>

@@ -6,9 +6,9 @@ import os
 import tempfile
 from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 import uvicorn
 
 from document_processor import DocumentProcessor
@@ -119,6 +119,60 @@ async def preview_corrections(file: UploadFile = File(...)):
         raise
     except Exception as e:
         raise HTTPException(500, f"Error: {str(e)}")
+
+
+@app.post("/convert")
+async def convert_format(
+    text: str = Form(...),
+    format: str = Form(...),
+    original_name: str = Form("document")
+):
+    """Convert corrected text to a specific format."""
+    if format not in ['pdf', 'docx', 'txt', 'xlsx']:
+        raise HTTPException(400, f"Unsupported format: {format}")
+    
+    try:
+        corrected_data = {'text': text}
+        
+        # For conversion, we don't have the original file, so create from scratch
+        if format == 'txt':
+            content = text.encode('utf-8')
+            media_type = 'text/plain'
+        elif format == 'pdf':
+            content = doc_processor.rebuild_document(corrected_data, '.pdf', None)
+            media_type = 'application/pdf'
+        elif format == 'docx':
+            # Create a new DOCX from scratch
+            from docx import Document
+            import io
+            doc = Document()
+            for para in text.split('\n'):
+                if para.strip():
+                    doc.add_paragraph(para)
+            buffer = io.BytesIO()
+            doc.save(buffer)
+            buffer.seek(0)
+            content = buffer.getvalue()
+            media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        elif format == 'xlsx':
+            # Create a new XLSX from scratch
+            from openpyxl import Workbook
+            import io
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Corrected Text"
+            for i, line in enumerate(text.split('\n'), 1):
+                ws.cell(row=i, column=1, value=line)
+            buffer = io.BytesIO()
+            wb.save(buffer)
+            buffer.seek(0)
+            content = buffer.getvalue()
+            media_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        
+        return Response(content=content, media_type=media_type)
+        
+    except Exception as e:
+        raise HTTPException(500, f"Conversion error: {str(e)}")
 
 
 if __name__ == "__main__":

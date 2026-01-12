@@ -48,9 +48,10 @@ class AICorrector:
     def _get_prompt(self, text: str) -> str:
         return f"""You are an expert medical editor and fact-checker. Correct the following document for:
 
-1. Spelling errors - fix all typos and misspellings
-2. Grammar errors - fix grammar, punctuation, and sentence structure
-3. Factual/Medical errors - correct any incorrect medical facts, statistics, drug names, dosages, or clinical claims
+1. Spelling errors - fix all typos and misspellings (type: "spelling")
+2. Grammar errors - fix grammar, punctuation, and sentence structure (type: "grammar")
+3. Factual errors - correct any INCORRECT medical facts, statistics, drug names, dosages, or clinical claims (type: "factual")
+4. Verified facts - when you verify that a medical claim or statistic IS CORRECT and accurate, note it (type: "verified")
 
 IMPORTANT RULES:
 - Return the COMPLETE corrected text. Do not shorten or truncate.
@@ -58,12 +59,14 @@ IMPORTANT RULES:
 - Write D2 not D², write H2O not H₂O, write 10^6 as 10^6 or "10 to the 6th".
 - Keep formatting simple - plain text only.
 - Preserve paragraph structure and line breaks.
+- For "factual" type: these are ERRORS that you corrected (incorrect information).
+- For "verified" type: these are facts you checked and confirmed are CORRECT (no change needed, but you verified the source/accuracy).
 
 Respond with JSON only:
 {{
     "corrected_text": "complete corrected text here",
     "changes": [
-        {{"type": "spelling|grammar|factual", "original": "...", "corrected": "...", "explanation": "..."}}
+        {{"type": "spelling|grammar|factual|verified", "original": "...", "corrected": "...", "explanation": "..."}}
     ],
     "summary": "brief summary of corrections"
 }}
