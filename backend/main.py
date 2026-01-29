@@ -48,8 +48,32 @@ async def health_check():
     }
 
 
+@app.post("/extract")
+async def extract_text(file: UploadFile = File(...)):
+    """Extract text from a document (used for meta review)."""
+    file_ext = Path(file.filename).suffix.lower()
+    
+    if file_ext not in SUPPORTED_FORMATS:
+        raise HTTPException(400, f"Unsupported format. Use: {', '.join(SUPPORTED_FORMATS)}")
+    
+    try:
+        content = await file.read()
+        extracted = doc_processor.extract_text(content, file_ext)
+        
+        return JSONResponse({
+            "text": extracted.get('text', ''),
+            "filename": file.filename
+        })
+        
+    except Exception as e:
+        raise HTTPException(500, f"Extraction error: {str(e)}")
+
+
 @app.post("/upload")
-async def upload_and_correct(file: UploadFile = File(...)):
+async def upload_and_correct(
+    file: UploadFile = File(...),
+    meta_review: str = Form(None)
+):
     """Upload a document, correct it, and return the corrected version."""
     file_ext = Path(file.filename).suffix.lower()
     
@@ -63,7 +87,7 @@ async def upload_and_correct(file: UploadFile = File(...)):
         if not extracted['text'].strip():
             raise HTTPException(400, "No text found in document")
         
-        corrected = await ai_corrector.correct_text(extracted)
+        corrected = await ai_corrector.correct_text(extracted, meta_review=meta_review)
         corrected_file = doc_processor.rebuild_document(corrected, file_ext, content)
         
         temp_dir = tempfile.mkdtemp()
@@ -92,7 +116,10 @@ async def upload_and_correct(file: UploadFile = File(...)):
 
 
 @app.post("/preview")
-async def preview_corrections(file: UploadFile = File(...)):
+async def preview_corrections(
+    file: UploadFile = File(...),
+    meta_review: str = Form(None)
+):
     """Preview corrections without downloading."""
     file_ext = Path(file.filename).suffix.lower()
     
@@ -106,7 +133,7 @@ async def preview_corrections(file: UploadFile = File(...)):
         if not extracted['text'].strip():
             raise HTTPException(400, "No text found in document")
         
-        corrected = await ai_corrector.correct_text(extracted)
+        corrected = await ai_corrector.correct_text(extracted, meta_review=meta_review)
         
         return JSONResponse({
             "original": extracted['text'],

@@ -33,7 +33,7 @@ class AICorrector:
     def get_provider(self) -> str:
         return self.provider or 'none'
     
-    async def correct_text(self, extracted_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def correct_text(self, extracted_data: Dict[str, Any], meta_review: str = None) -> Dict[str, Any]:
         """Correct text using AI for spelling, grammar, and factual accuracy."""
         text = extracted_data.get('text', '')
         
@@ -41,18 +41,32 @@ class AICorrector:
             return {**extracted_data, 'text': '', 'changes': [], 'summary': 'No text to correct'}
         
         if self.provider == 'bedrock':
-            return await self._bedrock_correct(text, extracted_data)
+            return await self._bedrock_correct(text, extracted_data, meta_review=meta_review)
         
         return self._fallback_correct(text, extracted_data)
     
-    def _get_prompt(self, text: str) -> str:
+    def _get_prompt(self, text: str, meta_review: str = None) -> str:
+        meta_context = ""
+        if meta_review:
+            # Truncate meta review if too long to avoid token limits
+            max_meta_length = 8000
+            truncated_meta = meta_review[:max_meta_length] if len(meta_review) > max_meta_length else meta_review
+            meta_context = f"""
+REFERENCE DOCUMENT (Meta Review):
+Use this larger reference document to validate facts, cross-check claims, and ensure consistency with the established findings. Any claims in the review paper that contradict or are inconsistent with the meta review should be flagged as factual errors.
+---
+{truncated_meta}
+---
+
+"""
+        
         return f"""You are an expert medical editor and fact-checker. Correct the following document for:
 
 1. Spelling errors - fix all typos and misspellings (type: "spelling")
 2. Grammar errors - fix grammar, punctuation, and sentence structure (type: "grammar")
 3. Factual errors - correct any INCORRECT medical facts, statistics, drug names, dosages, or clinical claims (type: "factual")
 4. Verified facts - when you verify that a medical claim or statistic IS CORRECT and accurate, note it (type: "verified")
-
+{meta_context}
 IMPORTANT RULES:
 - Return the COMPLETE corrected text. Do not shorten or truncate.
 - Do NOT use superscripts, subscripts, or special Unicode characters.
@@ -61,6 +75,7 @@ IMPORTANT RULES:
 - Preserve paragraph structure and line breaks.
 - For "factual" type: these are ERRORS that you corrected (incorrect information).
 - For "verified" type: these are facts you checked and confirmed are CORRECT (no change needed, but you verified the source/accuracy).
+{f'- Cross-reference claims against the provided Meta Review document for accuracy.' if meta_review else ''}
 
 Respond with JSON only:
 {{
@@ -71,14 +86,14 @@ Respond with JSON only:
     "summary": "brief summary of corrections"
 }}
 
-Document:
+Document to Review:
 ---
 {text}
 ---"""
 
-    async def _bedrock_correct(self, text: str, extracted_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _bedrock_correct(self, text: str, extracted_data: Dict[str, Any], meta_review: str = None) -> Dict[str, Any]:
         """Use Amazon Bedrock API for corrections."""
-        prompt = self._get_prompt(text)
+        prompt = self._get_prompt(text, meta_review=meta_review)
         
         models = [
             "amazon.nova-pro-v1:0",

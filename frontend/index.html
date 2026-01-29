@@ -44,9 +44,16 @@
             color: #666666;
         }
 
-        .upload-zone {
+        .upload-sections {
             width: 100%;
             max-width: 560px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .upload-zone {
+            width: 100%;
             background: #fafafa;
             border: 2px dashed #dddddd;
             border-radius: 8px;
@@ -64,6 +71,93 @@
         .upload-zone.dragging {
             border-color: #111111;
             background: #f0f0f0;
+        }
+
+        .upload-zone.meta-review {
+            padding: 24px;
+            background: #f8f9fa;
+            border-color: #cccccc;
+        }
+
+        .upload-zone.meta-review .upload-icon {
+            width: 36px;
+            height: 36px;
+            margin-bottom: 12px;
+        }
+
+        .upload-zone.meta-review .upload-title {
+            font-size: 16px;
+        }
+
+        .upload-zone.meta-review .upload-subtitle {
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888888;
+            margin-bottom: 8px;
+        }
+
+        .meta-uploaded {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px;
+            background: #e8f5e9;
+            border-radius: 6px;
+            margin-top: 12px;
+        }
+
+        .meta-uploaded .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #2e7d32;
+        }
+
+        .meta-uploaded .remove-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.15s;
+        }
+
+        .meta-uploaded .remove-btn:hover {
+            background: rgba(0,0,0,0.1);
+        }
+
+        .meta-uploaded .remove-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: #666666;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: #888888;
+            font-size: 13px;
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #dddddd;
         }
 
         .upload-icon {
@@ -584,22 +678,56 @@
             <p class="tagline">AI-powered document correction for spelling, grammar, and accuracy</p>
         </header>
 
-        <div id="uploadZone" class="upload-zone">
-            <input type="file" id="fileInput" accept=".pdf,.xlsx,.docx,.txt" style="display: none;">
-            <div class="upload-icon">
-                <svg viewBox="0 0 24 24">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
+        <div class="upload-sections">
+            <!-- Meta Review Upload -->
+            <div id="metaUploadZone" class="upload-zone meta-review">
+                <input type="file" id="metaFileInput" accept=".pdf,.xlsx,.docx,.txt" style="display: none;">
+                <p class="meta-label">Reference Document (Optional)</p>
+                <div class="upload-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                </div>
+                <h2 class="upload-title">Upload Meta Review</h2>
+                <p class="upload-subtitle">Large reference report for context</p>
+                <div class="upload-formats">
+                    <span class="format-badge">PDF</span>
+                    <span class="format-badge">DOCX</span>
+                    <span class="format-badge">TXT</span>
+                </div>
+                <div id="metaUploaded" class="meta-uploaded hidden">
+                    <span id="metaFileName" class="file-name"></span>
+                    <button id="removeMetaBtn" class="remove-btn" title="Remove">
+                        <svg viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <h2 class="upload-title">Drop your document here</h2>
-            <p class="upload-subtitle">or click to browse</p>
-            <div class="upload-formats">
-                <span class="format-badge">PDF</span>
-                <span class="format-badge">XLSX</span>
-                <span class="format-badge">DOCX</span>
-                <span class="format-badge">TXT</span>
+
+            <div class="section-divider">then</div>
+
+            <!-- Review Paper Upload -->
+            <div id="uploadZone" class="upload-zone">
+                <input type="file" id="fileInput" accept=".pdf,.xlsx,.docx,.txt" style="display: none;">
+                <div class="upload-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <h2 class="upload-title">Drop your review paper here</h2>
+                <p class="upload-subtitle">or click to browse</p>
+                <div class="upload-formats">
+                    <span class="format-badge">PDF</span>
+                    <span class="format-badge">XLSX</span>
+                    <span class="format-badge">DOCX</span>
+                    <span class="format-badge">TXT</span>
+                </div>
             </div>
         </div>
 
@@ -737,11 +865,18 @@
         
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
+        const metaUploadZone = document.getElementById('metaUploadZone');
+        const metaFileInput = document.getElementById('metaFileInput');
+        const metaUploaded = document.getElementById('metaUploaded');
+        const metaFileName = document.getElementById('metaFileName');
+        const removeMetaBtn = document.getElementById('removeMetaBtn');
         const processingContainer = document.getElementById('processingContainer');
         const resultsContainer = document.getElementById('resultsContainer');
         const errorContainer = document.getElementById('errorContainer');
         
         let currentFile = null;
+        let metaReviewFile = null;
+        let metaReviewText = null;
         let correctedBlob = null;
         let correctedText = null;
         let correctionsExpanded = false;
@@ -754,13 +889,14 @@
         }
 
         function showState(state) {
-            uploadZone.classList.add('hidden');
+            const uploadSections = document.querySelector('.upload-sections');
+            uploadSections.classList.add('hidden');
             processingContainer.classList.add('hidden');
             resultsContainer.classList.add('hidden');
             errorContainer.classList.add('hidden');
             
             switch(state) {
-                case 'upload': uploadZone.classList.remove('hidden'); break;
+                case 'upload': uploadSections.classList.remove('hidden'); break;
                 case 'processing': processingContainer.classList.remove('hidden'); break;
                 case 'results': resultsContainer.classList.remove('hidden'); break;
                 case 'error': errorContainer.classList.remove('hidden'); break;
@@ -771,6 +907,42 @@
             document.getElementById('progressPercent').textContent = percent + '%';
             document.getElementById('progressFill').style.width = percent + '%';
             document.getElementById('processingStep').textContent = step;
+        }
+
+        async function handleMetaUpload(file) {
+            metaReviewFile = file;
+            metaFileName.textContent = file.name;
+            metaUploaded.classList.remove('hidden');
+            
+            // Extract text from meta review
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const res = await fetch(`${API_URL}/extract`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    metaReviewText = data.text;
+                    console.log('Meta review loaded:', metaReviewText.substring(0, 100) + '...');
+                } else {
+                    console.error('Failed to extract meta review text');
+                    metaReviewText = null;
+                }
+            } catch (err) {
+                console.error('Meta review extraction error:', err);
+                metaReviewText = null;
+            }
+        }
+
+        function removeMetaReview() {
+            metaReviewFile = null;
+            metaReviewText = null;
+            metaUploaded.classList.add('hidden');
+            metaFileInput.value = '';
         }
 
         function toggleCorrections() {
@@ -810,8 +982,17 @@
             
             const formData = new FormData();
             formData.append('file', file);
+            if (metaReviewText) {
+                formData.append('meta_review', metaReviewText);
+            }
 
-            const steps = [
+            const steps = metaReviewText ? [
+                { progress: 15, step: 'Extracting text...' },
+                { progress: 35, step: 'Analyzing against meta review...' },
+                { progress: 55, step: 'Checking spelling & grammar...' },
+                { progress: 75, step: 'Verifying medical accuracy...' },
+                { progress: 90, step: 'Preparing document...' },
+            ] : [
                 { progress: 20, step: 'Extracting text...' },
                 { progress: 45, step: 'Checking spelling & grammar...' },
                 { progress: 70, step: 'Verifying medical accuracy...' },
@@ -842,6 +1023,9 @@
 
                 const fileFormData = new FormData();
                 fileFormData.append('file', file);
+                if (metaReviewText) {
+                    fileFormData.append('meta_review', metaReviewText);
+                }
                 
                 const fileRes = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
@@ -989,6 +1173,39 @@
             }
         }
 
+        // Meta review upload handlers
+        metaUploadZone.addEventListener('click', (e) => {
+            if (!e.target.closest('.remove-btn')) {
+                metaFileInput.click();
+            }
+        });
+        
+        metaFileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleMetaUpload(e.target.files[0]);
+        });
+
+        metaUploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            metaUploadZone.classList.add('dragging');
+        });
+
+        metaUploadZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            metaUploadZone.classList.remove('dragging');
+        });
+
+        metaUploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            metaUploadZone.classList.remove('dragging');
+            if (e.dataTransfer.files[0]) handleMetaUpload(e.dataTransfer.files[0]);
+        });
+
+        removeMetaBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeMetaReview();
+        });
+
+        // Review paper upload handlers
         uploadZone.addEventListener('click', () => fileInput.click());
         
         fileInput.addEventListener('change', (e) => {
